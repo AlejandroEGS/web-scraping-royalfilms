@@ -11,74 +11,78 @@ async function getPageTitle(url) {
 
 	await page.goto(url, { waitUntil: 'networkidle0' });
 	const title = await page.evaluate(() => document.querySelector('head > title').innerText);
-
 	await browser.close();
 
 	return title;
 }
 
-async function getMovieDetails(url) {
+async function getLinks(url) {
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
 
 	await page.goto(url, { waitUntil: 'networkidle0' });
-
-	var allMovieDetails = [];
+	await page.waitForSelector('[class=movie-box]');
 
 	const enlaces = await page.evaluate(() => {
 		const elements = document.querySelectorAll('a.movie-box');
 		const links = [];
 		for (let element of elements) {
-			links.push(element.href);
+			var id = '';
+			id = element.href;
+			id.toString();
+			id = id.substr(46, 4);
+			var link = 'https://royal-films.com/api/v1/movie/' + id + '/barranquilla?';
+			links.push(link);
 		}
 
 		return links;
 	});
 
-	//	var responses = [];
+	return enlaces;
+}
+
+async function getMovieDetails(url) {
+	
+	enlaces = await getLinks(url);
+
+	var movieF;
+
+	var allMovieDetails = [];
+
 	for (let enlace of enlaces) {
-		// page.on("response", async (response) => {
-		// 	if (response._request._resourceType == "xhr") {
-		// 		if (response.data[0] == "id" && response.data[0] == "language_id") {
-		// 			responses.push(response);
-		// 		}
-		// 	}
-		// });
 
-		await page.goto(enlace);
-		await page.waitForSelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12');
+		const movie = await fetch(enlace);
+		movieF = movie.json();
 
-		const movie = await page.evaluate(() => {
-			const details = {};
-			details.originalTitle = document.querySelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12 > div > div:nth-child(2) > table > tbody > tr:nth-child(2) > td').innerText;
-			details.title = document.querySelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12 h2').innerText;
-			var synopsis = '';
-			synopsis = document.querySelector('p.synopsis').innerText;
-			synopsis += document.querySelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12 > div > div:nth-child(2) > p > span:nth-child(2)').innerText;
-			// if (synopsis.includes('... ver más')){
-			// 	synopsis.replace('... ver más', '');
-			// }
-			details.synopsis = synopsis;
-			details.starred = document.querySelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12 > div > div:nth-child(2) > table > tbody > tr:nth-child(3) > td').innerText;
-			details.director = document.querySelector('#movie > div > div > div.col-xl-9.col-lg-8.col-md-7.col-sm-12 > div > div:nth-child(2) > table > tbody > tr:nth-child(4) > td').innerText;
-			var photo = '';
-			photo = document.querySelector('#movie > div > div > div.col-xl-3.col-lg-4.col-md-5.col-sm-12 > div > span').style.cssText;
-			var primerI = photo.indexOf("\"");
-			var ultimoI = photo.lastIndexOf("\"");
-			photo.substring((primerI+1),ultimoI);
-			details.posterPhoto = photo;
 
-			return details;
+		allMovieDetails.push({
+			originalTitle: movieF.data['original'],
+			title: movieF.data['title'],
+			synopsis: movieF.data['synopsis'],
+			starred: movieF.data['starred'],
+			director: movieF.data['director'],
+			posterPhoto: "/" + movieF.data['poster_photo'] + "/",
+			trailer: "https://www.youtube.com/watch?v=" + movieF.data.youtube + "/",
 		});
-		allMovieDetails.push(movie);
 	}
-
-	await browser.close();
-
 	return allMovieDetails;
+	// var allMovieDetails = [];
+
+	// for (let enlace of enlaces) {
+	// 	const movie = await page.evaluate(async (enlace) => {
+	// 		var response = await fetch(enlace);
+	// 		var responseJSON = await response.json();
+	// 		return responseJSON;
+	// 	});
+	// 	movieDetails = responseJSON.data['original'];
+
+	// 	allMovieDetails.push(movieDetails);
+	// }
+
 }
 
 module.exports = {
 	getPageTitle,
+	getLinks,
 	getMovieDetails,
 };
