@@ -42,30 +42,39 @@ async function getLinks(url) {
 }
 
 async function getMovieDetails(url) {
+
+
+	const browser = await puppeteer.launch();
+
+	const page = await browser.newPage();
+
+	await page.goto(url);
+
+	  const movieDetails = await page.evaluate(async (url) => {
+		const movie = await fetch(url);
+		return movie.json();
+	  },url);
+
+	await browser.close(); 
 	
-	enlaces = await getLinks(url);
+	var movieF = movieDetails;
 
-	var movieF;
+	// var movieF;
 
-	var allMovieDetails = [];
+	// var movie = await fetch(url, {}).then(response => response.json()).then(data => {debugger});
+	// movieF = movie;
+	
+	return {
+		originalTitle: movieF.data['original'],
+		title: movieF.data['title'],
+		synopsis: movieF.data['synopsis'],
+		starred: movieF.data['starred'],
+		director: movieF.data['director'],
+		posterPhoto: "/" + movieF.data['poster_photo'] + "/",
+		trailer: "https://www.youtube.com/watch?v=" + movieF.data.youtube + "/",
+	};
 
-	for (let enlace of enlaces) {
 
-		const movie = await fetch(enlace);
-		movieF = movie.json();
-
-
-		allMovieDetails.push({
-			originalTitle: movieF.data['original'],
-			title: movieF.data['title'],
-			synopsis: movieF.data['synopsis'],
-			starred: movieF.data['starred'],
-			director: movieF.data['director'],
-			posterPhoto: "/" + movieF.data['poster_photo'] + "/",
-			trailer: "https://www.youtube.com/watch?v=" + movieF.data.youtube + "/",
-		});
-	}
-	return allMovieDetails;
 	// var allMovieDetails = [];
 
 	// for (let enlace of enlaces) {
@@ -81,8 +90,22 @@ async function getMovieDetails(url) {
 
 }
 
+async function getAllMovieDetails(url){
+
+	enlaces = await getLinks(url);
+	var allMovieDetails = [];
+
+	for(let enlace of enlaces){
+		var details = await getMovieDetails(enlace);
+		allMovieDetails.push(details);
+	}
+
+	return allMovieDetails;
+}
+
 module.exports = {
 	getPageTitle,
 	getLinks,
 	getMovieDetails,
+	getAllMovieDetails,
 };
