@@ -1,10 +1,5 @@
 const puppeteer = require('puppeteer');
 
-/**
- * Go to url and return the page title
- * @param {string} url
- * @returns {string}
- */
 async function getPageTitle(url) {
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
@@ -38,14 +33,13 @@ async function getLinks(url) {
 		return links;
 	});
 
+	await browser.close();
+
 	return enlaces;
 }
 
 async function getMovieDetails(url) {
-
-
 	const browser = await puppeteer.launch();
-
 	const page = await browser.newPage();
 
 	await page.goto(url);
@@ -57,37 +51,17 @@ async function getMovieDetails(url) {
 
 	await browser.close(); 
 	
-	var movieF = movieDetails;
-
-	// var movieF;
-
-	// var movie = await fetch(url, {}).then(response => response.json()).then(data => {debugger});
-	// movieF = movie;
-	
-	return {
-		originalTitle: movieF.data['original'],
-		title: movieF.data['title'],
-		synopsis: movieF.data['synopsis'],
-		starred: movieF.data['starred'],
-		director: movieF.data['director'],
-		posterPhoto: "/" + movieF.data['poster_photo'] + "/",
-		trailer: "https://www.youtube.com/watch?v=" + movieF.data.youtube + "/",
+	objMovieDetails = {
+		originalTitle: movieDetails.data['original'],
+		title: movieDetails.data['title'],
+		synopsis: movieDetails.data['synopsis'],
+		starred: movieDetails.data['starred'],
+		director: movieDetails.data['director'],
+		posterPhoto: movieDetails.data['poster_photo'],
+		trailer: "https://youtube.com/watch?v=" + movieDetails.data.youtube
 	};
 
-
-	// var allMovieDetails = [];
-
-	// for (let enlace of enlaces) {
-	// 	const movie = await page.evaluate(async (enlace) => {
-	// 		var response = await fetch(enlace);
-	// 		var responseJSON = await response.json();
-	// 		return responseJSON;
-	// 	});
-	// 	movieDetails = responseJSON.data['original'];
-
-	// 	allMovieDetails.push(movieDetails);
-	// }
-
+	return objMovieDetails;
 }
 
 async function getAllMovieDetails(url){
@@ -105,7 +79,5 @@ async function getAllMovieDetails(url){
 
 module.exports = {
 	getPageTitle,
-	getLinks,
-	getMovieDetails,
 	getAllMovieDetails,
 };
